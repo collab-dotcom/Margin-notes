@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Margin">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F8F9FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1D23" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Margin Notebook</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* Layout: library drawer on the left, two-row tool strip, pages stacked on a desk like a paper notebook. */
+:root{
+  --desk:#E6E9EE; --chrome:#F8F9FB; --line:#D3D9E2; --fg:#1B2028; --muted:#5F6876;
+  --accent:#2348C8; --accent-ink:#FFFFFF; --sel:#E2E8FA; --danger:#BF3328; --shadow:rgba(22,32,56,.14);
+  --paper:#FFFFFF;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --ui:"Schibsted Grotesk", -apple-system, "Helvetica Neue", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --desk:#111317; --chrome:#1A1D23; --line:#2C3139; --fg:#E7EAEF; --muted:#959CA8;
+  --accent:#8AA4FF; --accent-ink:#0D1222; --sel:#232D4A; --danger:#FF7D70; --shadow:rgba(0,0,0,.55); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --desk:#111317; --chrome:#1A1D23; --line:#2C3139; --fg:#E7EAEF; --muted:#959CA8;
+  --accent:#8AA4FF; --accent-ink:#0D1222; --sel:#232D4A; --danger:#FF7D70; --shadow:rgba(0,0,0,.55); color-scheme:dark;}
+
+html,body{height:100%}
+body{background:var(--desk);color:var(--fg);font-family:var(--ui);font-size:15px;overflow:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg{display:block}
+
+#app{display:grid;grid-template-columns:288px minmax(0,1fr);height:100%}
+
+/* Library */
+#library{background:var(--chrome);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;z-index:30}
+.lib-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px 8px}
+.brand{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.lib-search{padding:4px 16px 10px}
+.lib-search input{width:100%;box-sizing:border-box;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--desk);color:var(--fg);padding:0 12px;font:inherit}
+.new-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:14px}
+#noteList{flex:1;overflow:auto;padding:4px 8px 12px;display:flex;flex-direction:column;gap:2px}
+.note-item{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;text-align:left;padding:9px 8px;border-radius:10px}
+.note-item:hover{background:var(--sel)}
+.note-item[aria-current="true"]{background:var(--sel)}
+.cover{width:34px;height:44px;border-radius:3px;background:var(--paper);box-shadow:0 0 0 1px var(--line) inset,0 1px 2px var(--shadow);position:relative;overflow:hidden}
+.cover::after{content:"";position:absolute;inset:8px 5px;background:repeating-linear-gradient(to bottom,transparent 0 5px,#C9D3E0 5px 6px)}
+.cover.t-blank::after{display:none}
+.cover.t-grid::after{background:linear-gradient(#C9D3E0 1px,transparent 1px) 0 0/5px 5px,linear-gradient(90deg,#C9D3E0 1px,transparent 1px) 0 0/5px 5px}
+.cover.t-dots::after{background:radial-gradient(#AFBBCB 1px,transparent 1.2px) 0 0/5px 5px}
+.cover.t-cornell::before{content:"";position:absolute;left:11px;top:6px;bottom:9px;width:1px;background:#9FB0C8;z-index:1}
+.n-title{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n-meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.lib-empty{padding:18px 12px;color:var(--muted);font-size:14px;line-height:1.5}
+.lib-foot{border-top:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#2F9E6A;flex:none}
+.dot.saving{background:#E0A321}
+.dot.local{background:var(--muted)}
+.dot.error{background:var(--danger)}
+#scrim{display:none}
+
+/* Editor */
+#editor{display:flex;flex-direction:column;min-width:0;min-height:0}
+.bar{background:var(--chrome);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:4px;padding:0 10px}
+.bar1{height:52px}
+.bar2{height:54px;justify-content:center;overflow-x:auto;scrollbar-width:none}
+.bar2::-webkit-scrollbar{display:none}
+.ib{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--fg)}
+.ib:hover{background:var(--sel)}
+.ib[disabled]{opacity:.35;pointer-events:none}
+.ib[aria-pressed="true"]{background:var(--sel);color:var(--accent)}
+#libBtn{display:none}
+#title{flex:1;min-width:0;height:40px;border:0;background:transparent;color:var(--fg);font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em;padding:0 8px;border-radius:8px}
+#title:focus{background:var(--desk);outline:none}
+.pagecount{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;padding:0 6px;font-variant-numeric:tabular-nums}
+.sep{width:1px;height:28px;background:var(--line);margin:0 6px;flex:none}
+.swatch{width:40px;height:44px;display:grid;place-items:center;flex:none;border-radius:10px}
+.swatch i{width:24px;height:24px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12) inset;display:block}
+.swatch[aria-pressed="true"] i{box-shadow:0 0 0 2px var(--chrome),0 0 0 4px var(--fg)}
+.swatch.custom{position:relative}
+.swatch.custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.swatch.custom i{background:conic-gradient(#e03131,#f59f00,#2f9e44,#1c7ed6,#7048e8,#e03131)}
+.wbtn{width:36px;height:44px;display:grid;place-items:center;border-radius:10px;flex:none}
+.wbtn i{display:block;border-radius:50%;background:var(--fg)}
+.wbtn[aria-pressed="true"]{background:var(--sel)}
+.wbtn[aria-pressed="true"] i{background:var(--accent)}
+
+#scroller{flex:1;overflow:auto;position:relative;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#pages{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px 16px 40vh;min-width:min-content;box-sizing:border-box}
+.page{position:relative;background:var(--paper);border-radius:3px;box-shadow:0 1px 2px var(--shadow),0 10px 30px var(--shadow);flex:none}
+.page canvas{display:block;width:100%;height:100%;border-radius:3px;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body.finger .page canvas{touch-action:none}
+.pnum{position:absolute;right:0;bottom:-18px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.texts{position:absolute;inset:0;pointer-events:none}
+.tbox{position:absolute;pointer-events:none}
+body.t-text .tbox{pointer-events:auto}
+.tx{font-family:var(--ui);color:#1B1D22;outline:none;white-space:pre-wrap;word-break:break-word;min-height:1em;-webkit-user-select:text;user-select:text;caret-color:var(--accent)}
+body.t-text .tx{box-shadow:0 0 0 1px rgba(35,72,200,.25);border-radius:2px}
+body.t-text .tx:focus{box-shadow:0 0 0 2px #2348C8}
+.grip{display:none;position:absolute;left:-26px;top:2px;width:22px;height:22px;border-radius:6px;background:#2348C8;color:#fff;touch-action:none;align-items:center;justify-content:center;font-size:12px}
+body.t-text .grip{display:flex}
+.example-tag{position:absolute;top:-14px;left:0;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+
+#hover{position:fixed;pointer-events:none;border-radius:50%;border:1.5px solid #2348C8;transform:translate(-50%,-50%);z-index:50}
+
+/* Sheet */
+#sheetWrap{position:fixed;inset:0;z-index:60;background:rgba(10,14,22,.32);display:flex;align-items:flex-start;justify-content:flex-end;padding:calc(env(safe-area-inset-top,0px) + 56px) 12px 12px}
+.sheet{background:var(--chrome);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px var(--shadow);width:min(380px,100%);max-height:100%;overflow:auto;padding:8px 0 10px}
+.sheet h3{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 18px 6px}
+.sheet .row{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px}
+.chip{height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line);font-size:14px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mi{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 18px;font-size:15px}
+.mi:hover{background:var(--sel)}
+.mi.danger{color:var(--danger)}
+.mi small{margin-left:auto;color:var(--muted);font-size:12.5px}
+.toggle{width:42px;height:26px;border-radius:13px;background:var(--line);position:relative;flex:none;margin-left:auto}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{left:19px}
+.confirm{padding:14px 18px 6px}
+.confirm p{margin:0 0 14px;line-height:1.5}
+.confirm .row{padding:0;justify-content:flex-end}
+.btn{height:40px;padding:0 16px;border-radius:10px;font-weight:600}
+.btn.ghost{border:1px solid var(--line)}
+.btn.red{background:var(--danger);color:#fff}
+.help{padding:4px 18px 8px;line-height:1.55;font-size:14.5px}
+.help dt{font-weight:600;margin-top:10px}
+.help dd{margin:2px 0 0;color:var(--muted)}
+
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--fg);color:var(--chrome);padding:10px 16px;border-radius:12px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:0 10px 30px var(--shadow)}
+
+@media (max-width: 980px){
+  #app{grid-template-columns:minmax(0,1fr)}
+  #library{position:fixed;top:0;bottom:0;left:0;width:min(320px,86vw);transform:translateX(-102%);transition:transform .22s ease;padding-top:env(safe-area-inset-top,0px);box-sizing:border-box}
+  #app.lib-open #library{transform:none;box-shadow:0 0 60px var(--shadow)}
+  #app.lib-open #scrim{display:block;position:fixed;inset:0;background:rgba(10,14,22,.3);z-index:25}
+  #libBtn{display:grid}
+}
+@media (max-width: 520px){ .pagecount{display:none} .bar2{justify-content:flex-start} }
+@media (prefers-reduced-motion: reduce){ #library,.toggle::after{transition:none} }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <aside id="library" aria-label="Notes library">
+    <div class="lib-head">
+      <div class="brand">Margin<span>.</span></div>
+      <button class="new-btn" id="newBtn" aria-label="New note">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>New
+      </button>
+    </div>
+    <div class="lib-search"><input id="search" type="search" placeholder="Search notes" autocomplete="off"></div>
+    <div id="noteList"><div class="lib-empty">Opening your notes…</div></div>
+    <div class="lib-foot"><span class="dot local" id="syncDot"></span><span id="syncText">Connecting…</span></div>
+  </aside>
+  <div id="scrim"></div>
+
+  <main id="editor">
+    <div class="bar bar1">
+      <button class="ib" id="libBtn" aria-label="Show notes">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="16" height="14" rx="2.5"/><path d="M8.5 4v14"/></svg>
+      </button>
+      <input id="title" aria-label="Note title" value="Welcome to Margin" autocomplete="off" spellcheck="false">
+      <span class="pagecount" id="pageCount">Page 1 of 1</span>
+      <button class="ib" id="undoBtn" aria-label="Undo" disabled>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5L4 9l4 4"/><path d="M4 9h9a5 5 0 010 10h-3"/></svg>
+      </button>
+      <button class="ib" id="redoBtn" aria-label="Redo" disabled>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l4 4-4 4"/><path d="M18 9H9a5 5 0 000 10h3"/></svg>
+      </button>
+      <button class="ib" id="moreBtn" aria-label="Page and note options">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><circle cx="5" cy="11" r="1.7"/><circle cx="11" cy="11" r="1.7"/><circle cx="17" cy="11" r="1.7"/></svg>
+      </button>
+    </div>
+    <div class="bar bar2" id="toolbar">
+      <button class="ib tool" data-tool="pen" aria-label="Pen (P)" aria-pressed="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M15.5 4.5l4 4L9 19l-5 1 1-5z"/><path d="M13.5 6.5l4 4"/></svg>
+      </button>
+      <button class="ib tool" data-tool="highlighter" aria-label="Highlighter (H)" aria-pressed="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M14 4l6 6-7 7-6-6z"/><path d="M7 11l-2 5 3 3 5-2"/><path d="M3 21h7"/></svg>
+      </button>
+      <button class="ib tool" data-tool="eraser" aria-label="Eraser (E)" aria-pressed="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M9 20h11"/><path d="M4.5 14.5L14 5l5 5-8.5 8.5a2 2 0 01-2.8 0L4.5 17.3a2 2 0 010-2.8z"/><path d="M8.5 10.5l5 5"/></svg>
+      </button>
+      <button class="ib tool" data-tool="text" aria-label="Text box (T)" aria-pressed="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 6V4.5h14V6M12 4.5v15M9 19.5h6"/></svg>
+      </button>
+      <span class="sep"></span>
+      <div id="swatches" style="display:flex"></div>
+      <span class="sep"></span>
+      <div id="widths" style="display:flex"></div>
+    </div>
+    <div id="scroller"><div id="pages"></div></div>
+  </main>
+</div>
+<div id="hover" hidden></div>
+<div id="sheetWrap" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" hidden></div>
+
+<script>
+(() => {
+const W = 1000, H = 1414;             // logical page: A4 portrait, 1 unit = 0.21 mm
+const RULE0 = 174, RULE = 34;          // ruled lines (8 mm college-ish rule)
+const MM5 = W / 210 * 5;               // 5 mm grid
+const INK = '#1B1D22';
+const INKS = {
+  pen: ['#1B1D22', '#2348C8', '#C9302C', '#1E8A57', '#7445C2'],
+  highlighter: ['#FFD43B', '#FF8FC1', '#5FE3B8', '#74C0FC', '#FFA94D']
+};
+const WIDTHS = { pen: [1.3, 2.3, 3.8], highlighter: [14, 22, 32], eraser: [9, 18, 34] };
+const TEMPLATES = [['blank','Blank'],['lined','Lined'],['grid','Grid'],['dots','Dots'],['cornell','Cornell']];
+const PAPERS = [['ivory','Ivory','#FBF6EA'],['cream','Cream','#F7EDD4'],['butter','Butter','#F3E5BC'],['white','White','#FFFFFF']];
+const STANDALONE = true;
+const JSPDF_SRC = 'jspdf.umd.min.js';
+
+const $ = s => document.querySelector(s);
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const app = $('#app'), scroller = $('#scroller'), pagesEl = $('#pages');
+
+let prefs = {};
+try { prefs = JSON.parse(localStorage.getItem('margin.prefs') || '{}'); } catch (e) {}
+const state = {
+  tool: 'pen',
+  color: { pen: prefs.pen || INKS.pen[0], highlighter: prefs.hl || INKS.highlighter[0] },
+  widthIdx: { pen: 1, highlighter: 1, eraser: 1 },
+  fingerDraw: !!prefs.finger, zoom: 1,
+  notes: new Map(), note: null, pages: [], undo: [], redo: [], query: ''
+};
+function savePrefs() {
+  try { localStorage.setItem('margin.prefs', JSON.stringify({ pen: state.color.pen, hl: state.color.highlighter, finger: state.fingerDraw, tpl: prefs.tpl, paper: prefs.paper })); } catch (e) {}
+}
+function paperColor() { return (PAPERS.find(p => p[0] === prefs.paper) || PAPERS[1])[2]; }
+function applyPaper() { document.documentElement.style.setProperty('--paper', paperColor()); }
+
+/* ---------- Stroke encoding (delta, quantized) ---------- */
+function enc(p) {
+  const out = []; let px = 0, py = 0, pp = 0;
+  for (let i = 0; i < p.length; i += 3) {
+    const x = Math.round(p[i] * 4), y = Math.round(p[i + 1] * 4), q = Math.round(p[i + 2] * 63);
+    out.push(x - px, y - py, q - pp); px = x; py = y; pp = q;
+  }
+  return out.join(',');
+}
+function dec(d) {
+  const a = d ? d.split(',').map(Number) : []; const p = new Array(a.length);
+  let x = 0, y = 0, q = 0;
+  for (let i = 0; i + 2 < a.length; i += 3) { x += a[i]; y += a[i + 1]; q += a[i + 2]; p[i] = x / 4; p[i + 1] = y / 4; p[i + 2] = q / 63; }
+  return p;
+}
+function bbox(s) {
+  let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
+  for (let i = 0; i < s.pts.length; i += 3) { const x = s.pts[i], y = s.pts[i + 1]; if (x < a) a = x; if (y < b) b = y; if (x > c) c = x; if (y > d) d = y; }
+  s.bb = [a, b, c, d]; return s;
+}
+const fromDoc = s => bbox({ t: s.t, c: s.c, w: s.w, pts: dec(s.d) });
+const toDoc = s => ({ t: s.t, c: s.c, w: s.w, d: enc(s.pts) });
+
+/* ---------- Drawing ---------- */
+function drawTemplate(ctx, tpl) {
+  ctx.save();
+  const rule = '#C7D2E1';
+  if (tpl === 'lined' || tpl === 'cornell') {
+    ctx.strokeStyle = rule; ctx.lineWidth = 1.1;
+    const bottom = tpl === 'cornell' ? H - 260 : H - 60;
+    for (let y = RULE0; y <= bottom; y += RULE) { ctx.beginPath(); ctx.moveTo(tpl === 'cornell' ? 40 : 0, y); ctx.lineTo(tpl === 'cornell' ? W - 40 : W, y); ctx.stroke(); }
+    if (tpl === 'lined') {
+      ctx.strokeStyle = '#E7A9A4'; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(110, 0); ctx.lineTo(110, H); ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#8FA3C0'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(40, 140); ctx.lineTo(W - 40, 140); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(300, 140); ctx.lineTo(300, H - 260); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(40, H - 260); ctx.lineTo(W - 40, H - 260); ctx.stroke();
+      ctx.fillStyle = '#8FA3C0'; ctx.font = '500 15px "JetBrains Mono", monospace';
+      ctx.fillText('DATE', 690, 118);
+      ctx.fillText('CUES', 48, 162); ctx.fillText('NOTES', 308, 162);
+      ctx.fillText('SUMMARY', 48, H - 236);
+      ctx.strokeStyle = rule; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(740, 122); ctx.lineTo(W - 40, 122); ctx.stroke();
+    }
+  } else if (tpl === 'grid') {
+    ctx.strokeStyle = '#D5DDE8'; ctx.lineWidth = 1;
+    for (let x = MM5; x < W; x += MM5) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = MM5; y < H; y += MM5) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  } else if (tpl === 'dots') {
+    ctx.fillStyle = '#AEBBCC';
+    for (let x = MM5; x < W; x += MM5) for (let y = MM5; y < H; y += MM5) { ctx.beginPath(); ctx.arc(x, y, 1.7, 0, 6.283); ctx.fill(); }
+  }
+  ctx.restore();
+}
+function drawStroke(ctx, s) {
+  const p = s.pts, n = p.length / 3;
+  if (!n) return;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = s.c; ctx.fillStyle = s.c;
+  if (s.t === 'h') {
+    ctx.globalAlpha = .42; ctx.globalCompositeOperation = 'multiply'; ctx.lineWidth = s.w; ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]);
+    if (n === 1) ctx.lineTo(p[0] + .5, p[1]);
+    for (let i = 1; i < n; i++) ctx.lineTo(p[i * 3], p[i * 3 + 1]);
+    ctx.stroke();
+  } else if (n === 1) {
+    ctx.beginPath(); ctx.arc(p[0], p[1], s.w * (.45 + 1.1 * p[2]) / 2, 0, 6.283); ctx.fill();
+  } else {
+    let x0 = p[0], y0 = p[1];
+    for (let i = 1; i < n; i++) {
+      const x1 = p[i * 3], y1 = p[i * 3 + 1];
+      const last = i === n - 1;
+      const mx = last ? x1 : (x1 + p[i * 3 + 3]) / 2, my = last ? y1 : (y1 + p[i * 3 + 4]) / 2;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x1, y1, mx, my);
+      ctx.lineWidth = s.w * (.45 + 1.1 * p[i * 3 + 2]); ctx.stroke();
+      x0 = mx; y0 = my;
+    }
+  }
+  ctx.restore();
+}
+function lineHeightFor(z) { return z <= 24 ? RULE : Math.round(z * 1.25); }
+function drawTexts(ctx, pg) {
+  for (const t of pg.texts) {
+    if (!t.s.trim()) continue;
+    ctx.save(); ctx.fillStyle = INK; ctx.textBaseline = 'alphabetic';
+    ctx.font = `${t.z >= 28 ? 600 : 400} ${t.z}px "Schibsted Grotesk", sans-serif`;
+    const lh = lineHeightFor(t.z); let y = t.y + (lh - t.z) / 2 + t.z * .82;
+    for (const para of t.s.split('\n')) {
+      let line = '';
+      for (const word of para.split(' ')) {
+        const test = line ? line + ' ' + word : word;
+        if (ctx.measureText(test).width > t.w && line) { ctx.fillText(line, t.x, y); y += lh; line = word; } else line = test;
+      }
+      ctx.fillText(line, t.x, y); y += lh;
+    }
+    ctx.restore();
+  }
+}
+function paint(ctx, pg, withText) {
+  ctx.fillStyle = paperColor(); ctx.fillRect(0, 0, W, H);
+  drawTemplate(ctx, pg.template);
+  for (const s of pg.strokes) drawStroke(ctx, s);
+  if (withText) drawTexts(ctx, pg);
+}
+
+/* ---------- Store: your account when signed in, this device otherwise ---------- */
+const idb = (() => {
+  let p;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open('margin', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const run = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('kv', mode); const req = fn(t.objectStore('kv'));
+      t.oncomplete = () => res(req ? req.result : undefined); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  };
+  return {
+    get: k => run('readonly', s => s.get(k)),
+    set: (k, v) => run('readwrite', s => s.put(v, k)),
+    del: k => run('readwrite', s => s.delete(k)),
+    notes: () => run('readonly', s => s.getAll(IDBKeyRange.bound('note:', 'note:\uffff')))
+  };
+})();
+const store = { mode: 'pending', db: null, notesCol: null, pagesCol: null, unsubPages: null };
+const writes = new Map();
+const busy = key => writes.has(key);
+
+async function initStore() {
+  let db = null, uid = null;
+  try {
+    if (window.claude && window.claude.use) {
+      const [d, u] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      db = d; uid = u ? await u.id() : null;
+    }
+  } catch (e) { db = null; }
+  if (db && uid) {
+    store.mode = 'cloud'; store.db = db;
+    const profile = db.doc('data/users/' + uid + '/profile');
+    store.notesCol = profile.collection('notes');
+    store.pagesCol = profile.collection('pages');
+    store.notesCol.onSnapshot(snap => {
+      if (snap.metadata.fromCache && snap.empty) return;
+      const m = new Map();
+      snap.docs.forEach(d => m.set(d.id, { id: d.id, ...d.data() }));
+      onNotes(m);
+    }, () => setSync('error', 'Sync stopped. Reload to reconnect.'));
+  } else {
+    store.mode = 'local';
+    const m = new Map();
+    try { (await idb.notes()).forEach(n => m.set(n.id, n)); }
+    catch (e) { toast('This browser is blocking storage, so notes won’t be kept.'); }
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    onNotes(m);
+  }
+  setSync();
+}
+function localPut(kind, id, data) {
+  const key = kind + ':' + id;
+  if (!data) return idb.del(key);
+  return idb.set(key, kind === 'note' ? { id, ...data } : data);
+}
+function refFor(kind, id) {
+  if (store.mode === 'cloud') return (kind === 'note' ? store.notesCol : store.pagesCol).doc(id);
+  return { set: d => localPut(kind, id, d), delete: () => localPut(kind, id, null) };
+}
+function queueWrite(kind, id, getData, delay = 700) {
+  const key = kind + ':' + id;
+  const w = writes.get(key) || {}; writes.set(key, w);
+  w.kind = kind; w.id = id; w.getData = getData;
+  clearTimeout(w.timer);
+  w.timer = setTimeout(() => flush(key), delay);
+  setSync();
+}
+async function flush(key) {
+  const w = writes.get(key); if (!w) return;
+  clearTimeout(w.timer); w.timer = null;
+  if (w.inflight) { w.again = true; return; }
+  if (store.mode === 'pending') { w.timer = setTimeout(() => flush(key), 500); return; }
+  w.inflight = true; setSync();
+  const data = w.getData();
+  try {
+    await refFor(w.kind, w.id).set(data);
+    w.failed = 0;
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'quota_exceeded') toast('Storage is full. Delete a few old notes to keep saving.');
+    else if (code === 'invalid_argument') toast('This page holds too much ink to save. Continue on a new page.');
+    else if (store.mode === 'local') toast('This device is out of storage for notes.');
+    else if ((w.failed = (w.failed || 0) + 1) < 4) { w.again = true; }
+    if (code === 'invalid_argument' || code === 'quota_exceeded') w.error = true;
+  }
+  w.inflight = false;
+  if (w.again) { w.again = false; w.timer = setTimeout(() => flush(key), w.failed ? 1500 * w.failed : 50); }
+  else if (!w.timer) writes.delete(key);
+  setSync();
+}
+function flushAll() { for (const key of [...writes.keys()]) flush(key); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushAll(); });
+window.addEventListener('pagehide', flushAll);
+
+function setSync(kind, text) {
+  const dot = $('#syncDot'), label = $('#syncText');
+  if (kind === 'error') { dot.className = 'dot error'; label.textContent = text; return; }
+  if (store.mode === 'pending') { dot.className = 'dot local'; label.textContent = 'Connecting…'; return; }
+  if (writes.size) { dot.className = 'dot saving'; label.textContent = 'Saving…'; return; }
+  if (store.mode === 'cloud') { dot.className = 'dot'; label.textContent = 'Saved to your account'; }
+  else { dot.className = STANDALONE ? 'dot' : 'dot local'; label.textContent = STANDALONE ? 'Saved on this iPad · works offline' : 'Saved on this device only'; }
+}
+
+const noteData = n => ({ title: n.title, created: n.created, updated: n.updated, pageIds: n.pageIds, template: n.template });
+const pageData = pg => ({ noteId: pg.noteId, template: pg.template, strokes: pg.strokes.map(toDoc), texts: pg.texts.map(t => ({ id: t.id, x: t.x, y: t.y, w: t.w, z: t.z, s: t.s })), updated: pg.updated });
+
+function saveNote() {
+  const n = state.note; if (!n || n.example) return;
+  n.updated = Date.now(); state.notes.set(n.id, n);
+  queueWrite('note', n.id, () => noteData(n));
+  renderLibrary();
+}
+function savePage(pg) {
+  if (state.note.example) makeReal();
+  pg.updated = Date.now();
+  queueWrite('page', pg.id, () => {
+    const d = pageData(pg);
+    const size = JSON.stringify(d).length;
+    if (size > 225000 && !pg.warned) { pg.warned = true; toast('This page is almost full. Add a new page to keep writing.'); }
+    return d;
+  });
+  saveNote();
+}
+
+/* ---------- Notes ---------- */
+function onNotes(m) {
+  // keep the open note's local edits if they haven't reached the store yet
+  const cur = state.note;
+  if (cur && !cur.example && busy('note:' + cur.id)) m.set(cur.id, cur);
+  state.notes = m;
+  if (cur && !cur.example) {
+    const remote = m.get(cur.id);
+    if (!remote) { if (!busy('note:' + cur.id)) openFirst(); }
+    else if (remote !== cur && !busy('note:' + cur.id)) {
+      const pagesChanged = remote.pageIds.join() !== cur.pageIds.join();
+      Object.assign(cur, remote); m.set(cur.id, cur);
+      if (document.activeElement !== $('#title')) $('#title').value = cur.title;
+      if (pagesChanged) openNote(cur.id, true);
+    }
+  } else if (cur && cur.example && !cur.touched && m.size) {
+    openFirst();
+  }
+  renderLibrary();
+}
+function sortedNotes() { return [...state.notes.values()].sort((a, b) => (b.updated || 0) - (a.updated || 0)); }
+function openFirst() { const n = sortedNotes()[0]; if (n) openNote(n.id); else openExample(); }
+
+function fmtDate(t) {
+  const d = new Date(t), now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
+}
+function renderLibrary() {
+  const list = $('#noteList'); list.innerHTML = '';
+  if (store.mode === 'pending') { list.innerHTML = '<div class="lib-empty">Opening your notes…</div>'; return; }
+  const q = state.query.trim().toLowerCase();
+  const notes = sortedNotes().filter(n => !q || (n.title || '').toLowerCase().includes(q));
+  if (!state.notes.size) { list.innerHTML = '<div class="lib-empty">No notes yet. Tap <b>New</b> to start a notebook, or write on the example page.</div>'; return; }
+  if (!notes.length) { list.innerHTML = '<div class="lib-empty">No notes match that search.</div>'; return; }
+  for (const n of notes) {
+    const b = document.createElement('button');
+    b.className = 'note-item';
+    b.setAttribute('aria-current', state.note && state.note.id === n.id ? 'true' : 'false');
+    const pc = (n.pageIds || []).length;
+    b.innerHTML = `<span class="cover t-${n.template || 'lined'}"></span><span style="min-width:0"><div class="n-title"></div><div class="n-meta">${fmtDate(n.updated || n.created)} · ${pc} page${pc === 1 ? '' : 's'}</div></span>`;
+    b.querySelector('.n-title').textContent = n.title || 'Untitled';
+    b.onclick = () => { openNote(n.id); app.classList.remove('lib-open'); };
+    list.appendChild(b);
+  }
+}
+
+function newPage(noteId, template) {
+  return { id: newId(), noteId, template, strokes: [], texts: [], updated: Date.now() };
+}
+function createNote() {
+  const tpl = prefs.tpl || 'lined';
+  const id = newId();
+  const d = new Date();
+  const note = { id, title: 'Notes · ' + d.toLocaleDateString([], { day: 'numeric', month: 'short' }), created: Date.now(), updated: Date.now(), pageIds: [], template: tpl };
+  const pg = newPage(id, tpl);
+  note.pageIds.push(pg.id);
+  state.notes.set(id, note);
+  queueWrite('page', pg.id, () => pageData(pg), 0);
+  queueWrite('note', id, () => noteData(note), 0);
+  setNote(note, [pg]);
+  app.classList.remove('lib-open');
+  renderLibrary();
+}
+function makeReal() {
+  const n = state.note; if (!n.example) return;
+  n.example = false; n.touched = true;
+  n.created = n.updated = Date.now();
+  state.notes.set(n.id, n);
+  state.pages.forEach(pg => queueWrite('page', pg.id, () => pageData(pg)));
+  queueWrite('note', n.id, () => noteData(n));
+  document.querySelectorAll('.example-tag').forEach(e => e.remove());
+  renderLibrary();
+}
+async function openNote(id, keepScroll) {
+  const n = state.notes.get(id); if (!n) return;
+  const top = keepScroll ? scroller.scrollTop : 0;
+  let docs = new Map();
+  if (store.mode === 'cloud') {
+    try { const snap = await store.pagesCol.where('noteId', '==', id).get(); snap.docs.forEach(d => docs.set(d.id, d.data())); }
+    catch (e) { toast('Could not open that note. Check your connection and try again.'); return; }
+  } else {
+    for (const pid of n.pageIds) { try { const d = await idb.get('page:' + pid); if (d) docs.set(pid, d); } catch (e) {} }
+  }
+  const pages = n.pageIds.map(pid => {
+    const d = docs.get(pid);
+    if (!d) return { id: pid, noteId: id, template: n.template || 'lined', strokes: [], texts: [], updated: 0 };
+    return { id: pid, noteId: id, template: d.template, strokes: (d.strokes || []).map(fromDoc), texts: (d.texts || []).map(t => ({ ...t })), updated: d.updated || 0 };
+  });
+  if (!pages.length) { const pg = newPage(id, n.template || 'lined'); n.pageIds.push(pg.id); pages.push(pg); }
+  setNote(n, pages);
+  if (keepScroll) scroller.scrollTop = top;
+  watchPages(id);
+}
+function watchPages(noteId) {
+  if (store.unsubPages) { store.unsubPages(); store.unsubPages = null; }
+  if (store.mode !== 'cloud') return;
+  store.unsubPages = store.pagesCol.where('noteId', '==', noteId).onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      if (ch.type === 'removed' || ch.doc.metadata.hasPendingWrites) return;
+      const pg = state.pages.find(p => p.id === ch.doc.id); if (!pg) return;
+      const d = ch.doc.data();
+      if (busy('page:' + pg.id) || (live && live.pg === pg) || !(d.updated > pg.updated)) return;
+      if (pg.el && pg.el.contains(document.activeElement)) return;
+      pg.template = d.template; pg.strokes = (d.strokes || []).map(fromDoc); pg.texts = (d.texts || []).map(t => ({ ...t })); pg.updated = d.updated;
+      renderTexts(pg); requestRender(pg);
+    });
+  }, () => {});
+}
+function setNote(n, pages) {
+  state.note = n; state.pages = pages; state.undo = []; state.redo = [];
+  $('#title').value = n.title || '';
+  updateUndo(); buildPages(); renderLibrary();
+  scroller.scrollTop = 0; scroller.scrollLeft = 0;
+}
+
+/* ---------- Example note (shown until you have notes of your own) ---------- */
+function sampleLine(x1, y1, x2, y2, n, amp, freq) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const t = i / n; pts.push(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t + Math.sin(t * freq) * amp, .3 + .35 * Math.sin(t * Math.PI)); }
+  return pts;
+}
+function openExample() {
+  const id = newId();
+  const pg = newPage(id, 'cornell');
+  const top = k => RULE0 + RULE * k - 28;
+  pg.texts = [
+    { id: newId(), x: 44, y: 46, w: 620, z: 34, s: 'Welcome to Margin' },
+    { id: newId(), x: 48, y: top(1), w: 236, z: 22, s: 'Writing' },
+    { id: newId(), x: 316, y: top(1), w: 640, z: 22, s: 'Write anywhere with Apple Pencil. Press harder for a heavier line. Hover the tip just above the glass to see where it will land.' },
+    { id: newId(), x: 48, y: top(6), w: 236, z: 22, s: 'Fingers' },
+    { id: newId(), x: 316, y: top(6), w: 640, z: 22, s: 'One finger scrolls, so your palm can rest on the page. Tap with two fingers to undo, three fingers to redo.' },
+    { id: newId(), x: 48, y: top(11), w: 236, z: 22, s: 'Typing' },
+    { id: newId(), x: 316, y: top(11), w: 640, z: 22, s: 'Pick the T tool and tap the page to add a text box. Write inside it with the Pencil and Scribble converts it to type.' },
+    { id: newId(), x: 48, y: top(16), w: 236, z: 22, s: 'Paper' },
+    { id: newId(), x: 316, y: top(16), w: 640, z: 22, s: 'Change the paper from the ••• menu: blank, lined, 5 mm grid, dots or Cornell.' },
+    { id: newId(), x: 48, y: H - 222, w: 900, z: 22, s: 'This is an example page. Write on it to keep it as a note, or start fresh with New in the library.' }
+  ];
+  const strokes = [];
+  strokes.push({ t: 'p', c: '#2348C8', w: 2.6, pts: sampleLine(46, 108, 372, 104, 40, 1.6, 7) });
+  strokes.push({ t: 'h', c: '#FFD43B', w: 24, pts: sampleLine(318, RULE0 + RULE - 10, 760, RULE0 + RULE - 12, 20, .8, 3) });
+  // star doodle
+  const cx = 150, cy = top(21) + 40;
+  const st = []; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 4 * Math.PI / 5; st.push(cx + Math.cos(a) * 46, cy + Math.sin(a) * 46, .35 + .15 * (i % 2)); }
+  st.push(st[0], st[1], st[2]);
+  const starPts = []; for (let i = 0; i < st.length - 3; i += 3) { const s2 = sampleLine(st[i], st[i + 1], st[i + 3], st[i + 4], 8, .6, 2); starPts.push(...s2); }
+  strokes.push({ t: 'p', c: '#C9302C', w: 2.2, pts: starPts });
+  strokes.push({ t: 'p', c: '#1B1D22', w: 2.2, pts: sampleLine(214, cy - 6, 330, cy - 34, 18, 2, 5) });
+  strokes.push({ t: 'p', c: '#1B1D22', w: 2.2, pts: [...sampleLine(312, cy - 46, 332, cy - 34, 4, 0, 1), ...sampleLine(332, cy - 34, 318, cy - 16, 4, 0, 1)] });
+  pg.strokes = strokes.map(bbox);
+  const note = { id, title: 'Welcome to Margin', created: Date.now(), updated: Date.now(), pageIds: [pg.id], template: 'cornell', example: true };
+  setNote(note, [pg]);
+  const tag = document.createElement('span'); tag.className = 'example-tag'; tag.textContent = 'Example page';
+  pg.el.appendChild(tag);
+}
+
+/* ---------- Pages DOM ---------- */
+const io = new IntersectionObserver(entries => {
+  for (const en of entries) {
+    const pg = en.target._pg; if (!pg) continue;
+    pg.visible = en.isIntersecting;
+    if (pg.visible) { if (pg.needsRender) renderPage(pg); }
+    else if (!(live && live.pg === pg)) { pg.canvas.width = 1; pg.canvas.height = 1; pg.needsRender = true; }
+  }
+}, { root: scroller, rootMargin: '800px 0px' });
+
+function buildPages() {
+  io.disconnect(); pagesEl.innerHTML = '';
+  state.pages.forEach(pg => createPageEl(pg));
+  layout();
+  state.pages.forEach(pg => io.observe(pg.el));
+}
+function createPageEl(pg, before) {
+  const el = document.createElement('div'); el.className = 'page'; el._pg = pg;
+  const canvas = document.createElement('canvas');
+  const texts = document.createElement('div'); texts.className = 'texts';
+  const num = document.createElement('span'); num.className = 'pnum';
+  el.append(canvas, texts, num);
+  pg.el = el; pg.canvas = canvas; pg.textLayer = texts; pg.needsRender = true;
+  bindCanvas(pg);
+  if (before) pagesEl.insertBefore(el, before); else pagesEl.appendChild(el);
+  renderTexts(pg);
+}
+function pageWidth() {
+  const avail = Math.max(280, scroller.clientWidth - 32);
+  return Math.round(Math.min(avail, 900) * state.zoom);
+}
+function layout() {
+  const cssW = pageWidth();
+  state.pages.forEach((pg, i) => {
+    pg.cssW = cssW;
+    pg.el.style.width = cssW + 'px'; pg.el.style.height = Math.round(cssW * H / W) + 'px';
+    pg.el.style.setProperty('--s', cssW / W);
+    pg.el.querySelector('.pnum').textContent = (i + 1) + ' / ' + state.pages.length;
+    pg.needsRender = true;
+    if (pg.visible) renderPage(pg);
+  });
+  updatePageCount();
+}
+new ResizeObserver(() => { if (state.pages.length && state.pages[0].cssW !== pageWidth()) layout(); }).observe(scroller);
+
+function renderPage(pg) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const pw = Math.round(pg.cssW * dpr), ph = Math.round(pg.cssW * H / W * dpr);
+  if (pg.canvas.width !== pw || pg.canvas.height !== ph) { pg.canvas.width = pw; pg.canvas.height = ph; }
+  const ctx = pg.ctx = pg.canvas.getContext('2d');
+  pg.k = pw / W;
+  ctx.setTransform(pg.k, 0, 0, pg.k, 0, 0);
+  paint(ctx, pg);
+  pg.needsRender = false;
+}
+const renderQueue = new Set(); let renderRaf = 0;
+function requestRender(pg) {
+  pg.needsRender = true; if (!pg.visible) return;
+  renderQueue.add(pg);
+  if (!renderRaf) renderRaf = requestAnimationFrame(() => { renderRaf = 0; renderQueue.forEach(renderPage); renderQueue.clear(); });
+}
+
+/* ---------- Text boxes ---------- */
+function renderTexts(pg) {
+  pg.textLayer.innerHTML = '';
+  pg.texts.forEach(t => addTextEl(pg, t));
+}
+function addTextEl(pg, t) {
+  const box = document.createElement('div'); box.className = 'tbox';
+  const grip = document.createElement('div'); grip.className = 'grip'; grip.textContent = '⋮⋮'; grip.setAttribute('aria-label', 'Move text');
+  const tx = document.createElement('div'); tx.className = 'tx'; tx.contentEditable = 'true'; tx.spellcheck = true;
+  tx.textContent = t.s;
+  box.append(grip, tx);
+  const place = () => {
+    box.style.left = (t.x / W * 100) + '%'; box.style.top = (t.y / H * 100) + '%'; box.style.width = (t.w / W * 100) + '%';
+    tx.style.fontSize = `calc(var(--s) * ${t.z}px)`; tx.style.lineHeight = `calc(var(--s) * ${lineHeightFor(t.z)}px)`;
+    tx.style.fontWeight = t.z >= 28 ? 600 : 400;
+  };
+  place();
+  let typing;
+  tx.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => { t.s = tx.innerText.replace(/\n$/, ''); savePage(pg); }, 400); });
+  tx.addEventListener('blur', () => {
+    clearTimeout(typing);
+    const s = tx.innerText.replace(/\n$/, '');
+    if (!s.trim()) { pg.texts = pg.texts.filter(x => x !== t); box.remove(); savePage(pg); }
+    else if (s !== t.s) { t.s = s; savePage(pg); }
+  });
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault(); grip.setPointerCapture(e.pointerId);
+    const r = pg.el.getBoundingClientRect(); const sx = e.clientX, sy = e.clientY, ox = t.x, oy = t.y;
+    const mv = ev => { t.x = Math.max(0, Math.min(W - 60, ox + (ev.clientX - sx) / r.width * W)); t.y = Math.max(0, Math.min(H - 30, oy + (ev.clientY - sy) / r.height * H)); place(); };
+    const up = () => { grip.removeEventListener('pointermove', mv); grip.removeEventListener('pointerup', up); grip.removeEventListener('pointercancel', up); t.y = snapTextY(pg, t.y); place(); savePage(pg); };
+    grip.addEventListener('pointermove', mv); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
+  });
+  pg.textLayer.appendChild(box);
+  return tx;
+}
+function snapTextY(pg, y) {
+  if (pg.template !== 'lined' && pg.template !== 'cornell') return y;
+  const k = Math.max(0, Math.round((y + 28 - RULE0) / RULE));
+  return RULE0 + RULE * k - 28;
+}
+function createText(pg, x, y) {
+  if (state.note.example) makeReal();
+  const t = { id: newId(), x: Math.max(16, x - 4), y: snapTextY(pg, y - 18), w: Math.max(200, Math.min(640, W - x - 30)), z: 22, s: '' };
+  pg.texts.push(t);
+  const tx = addTextEl(pg, t);
+  tx.focus();
+}
+
+/* ---------- Pencil input ---------- */
+let live = null;
+let base = document.createElement('canvas');
+let lastPen = 0;
+const hoverEl = $('#hover');
+
+function canDraw(e) {
+  if (e.pointerType === 'pen') { lastPen = Date.now(); return true; }
+  if (e.pointerType === 'mouse') return e.button === 0;
+  return state.fingerDraw && Date.now() - lastPen > 600;
+}
+function toLogical(e, pg) {
+  const r = pg.canvas.getBoundingClientRect();
+  return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H];
+}
+function curWidth() { return WIDTHS[state.tool][state.widthIdx[state.tool]]; }
+function pressureOf(e) {
+  if (e.pointerType === 'pen') return Math.max(.05, Math.min(1, e.pressure || .4));
+  return .5;
+}
+
+function bindCanvas(pg) {
+  const c = pg.canvas;
+  // Stop the Pencil from scrolling the page; fingers keep native scrolling.
+  const stopStylus = e => {
+    const t = e.changedTouches[0];
+    if (e.cancelable && ((t && t.touchType === 'stylus') || state.fingerDraw)) e.preventDefault();
+  };
+  c.addEventListener('touchstart', stopStylus, { passive: false });
+  c.addEventListener('touchmove', stopStylus, { passive: false });
+
+  let tap = null;
+  c.addEventListener('pointerdown', e => {
+    hoverEl.hidden = true;
+    if (state.tool === 'text') { tap = { x: e.clientX, y: e.clientY, id: e.pointerId }; return; }
+    if (!canDraw(e) || live) return;
+    e.preventDefault();
+    try { c.setPointerCapture(e.pointerId); } catch (_) {}
+    if (pg.needsRender || c.width <= 1) renderPage(pg);
+    const [x, y] = toLogical(e, pg);
+    if (state.tool === 'eraser') {
+      live = { pg, id: e.pointerId, erase: true, removed: [] };
+      eraseAt(pg, x, y);
+      return;
+    }
+    if (base.width !== c.width || base.height !== c.height) { base.width = c.width; base.height = c.height; }
+    const bctx = base.getContext('2d'); bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, base.width, base.height); bctx.drawImage(c, 0, 0);
+    const p = pressureOf(e);
+    live = { pg, id: e.pointerId, p, stroke: { t: state.tool === 'pen' ? 'p' : 'h', c: state.color[state.tool], w: curWidth(), pts: [x, y, p] } };
+    drawLive();
+  });
+  c.addEventListener('pointermove', e => {
+    if (!live || live.id !== e.pointerId) {
+      if (e.pointerType === 'pen' && e.buttons === 0 && state.tool !== 'text') showHover(e, pg);
+      return;
+    }
+    e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of (evs.length ? evs : [e])) {
+      const [x, y] = toLogical(ev, pg);
+      if (live.erase) { eraseAt(pg, x, y); continue; }
+      const pts = live.stroke.pts, n = pts.length;
+      const dx = x - pts[n - 3], dy = y - pts[n - 2];
+      if (dx * dx + dy * dy < .5) continue;
+      live.p = live.p * .55 + pressureOf(ev) * .45;
+      pts.push(x, y, live.p);
+    }
+    if (!live.erase) scheduleLive();
+  });
+  const end = e => {
+    if (tap && tap.id === e.pointerId) {
+      const moved = Math.hypot(e.clientX - tap.x, e.clientY - tap.y);
+      tap = null;
+      if (e.type === 'pointerup' && moved < 10 && state.tool === 'text') { const [x, y] = toLogical(e, pg); createText(pg, x, y); }
+      return;
+    }
+    if (!live || live.id !== e.pointerId) return;
+    const L = live; live = null;
+    if (L.erase) {
+      if (L.removed.length) { pushUndo({ k: 'erase', pg: L.pg, items: L.removed }); savePage(L.pg); }
+      return;
+    }
+    const s = bbox(L.stroke);
+    L.pg.strokes.push(s);
+    pushUndo({ k: 'add', pg: L.pg, stroke: s });
+    renderPage(L.pg);
+    savePage(L.pg);
+  };
+  c.addEventListener('pointerup', end);
+  c.addEventListener('pointercancel', end);
+  c.addEventListener('pointerleave', e => { if (e.pointerType === 'pen') hoverEl.hidden = true; });
+}
+let liveRaf = 0;
+function scheduleLive() { if (!liveRaf) liveRaf = requestAnimationFrame(() => { liveRaf = 0; drawLive(); }); }
+function drawLive() {
+  if (!live || live.erase) return;
+  const ctx = live.pg.ctx;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(base, 0, 0);
+  ctx.setTransform(live.pg.k, 0, 0, live.pg.k, 0, 0);
+  drawStroke(ctx, live.stroke);
+}
+function segDist2(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay; const l = dx * dx + dy * dy;
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0; t = Math.max(0, Math.min(1, t));
+  const x = ax + t * dx - px, y = ay + t * dy - py; return x * x + y * y;
+}
+function eraseAt(pg, x, y) {
+  const r = curWidth(); let hit = false;
+  for (let i = pg.strokes.length - 1; i >= 0; i--) {
+    const s = pg.strokes[i], b = s.bb, pad = r + s.w;
+    if (x < b[0] - pad || x > b[2] + pad || y < b[1] - pad || y > b[3] + pad) continue;
+    const p = s.pts, rr = (r + s.w / 2) * (r + s.w / 2);
+    let touched = p.length === 3 ? (p[0] - x) ** 2 + (p[1] - y) ** 2 < rr : false;
+    for (let j = 3; !touched && j < p.length; j += 3) if (segDist2(x, y, p[j - 3], p[j - 2], p[j], p[j + 1]) < rr) touched = true;
+    if (touched) { live.removed.push({ s, i }); pg.strokes.splice(i, 1); hit = true; }
+  }
+  if (hit) requestRender(pg);
+}
+function showHover(e, pg) {
+  const k = pg.canvas.getBoundingClientRect().width / W;
+  let d = state.tool === 'eraser' ? curWidth() * 2 * k : Math.max(6, curWidth() * (state.tool === 'pen' ? 1.2 : 1) * k);
+  hoverEl.style.width = hoverEl.style.height = d + 'px';
+  hoverEl.style.left = e.clientX + 'px'; hoverEl.style.top = e.clientY + 'px';
+  hoverEl.style.borderColor = state.tool === 'eraser' ? '#8C96A5' : state.color[state.tool];
+  hoverEl.hidden = false;
+}
+
+/* ---------- Undo / redo ---------- */
+function pushUndo(a) { state.undo.push(a); if (state.undo.length > 200) state.undo.shift(); state.redo = []; updateUndo(); }
+function updateUndo() { $('#undoBtn').disabled = !state.undo.length; $('#redoBtn').disabled = !state.redo.length; }
+function applyAction(a, reverse) {
+  const pg = a.pg;
+  if (a.k === 'add') {
+    if (reverse) { const i = pg.strokes.lastIndexOf(a.stroke); if (i >= 0) pg.strokes.splice(i, 1); }
+    else pg.strokes.push(a.stroke);
+  } else if (a.k === 'erase') {
+    if (reverse) [...a.items].sort((m, n) => m.i - n.i).forEach(({ s, i }) => pg.strokes.splice(Math.min(i, pg.strokes.length), 0, s));
+    else a.items.forEach(({ s }) => { const i = pg.strokes.indexOf(s); if (i >= 0) pg.strokes.splice(i, 1); });
+  } else if (a.k === 'clear') {
+    pg.strokes = reverse ? a.prev.slice() : []; pg.texts = reverse ? a.prevTexts.slice() : []; renderTexts(pg);
+  }
+  requestRender(pg); savePage(pg);
+}
+function undo() { const a = state.undo.pop(); if (!a) return; applyAction(a, true); state.redo.push(a); updateUndo(); }
+function redo() { const a = state.redo.pop(); if (!a) return; applyAction(a, false); state.undo.push(a); updateUndo(); }
+$('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
+
+// Two-finger tap = undo, three-finger tap = redo
+(() => {
+  let g = null;
+  scroller.addEventListener('touchstart', e => {
+    if ([...e.touches].some(t => t.touchType === 'stylus')) { g = null; return; }
+    if (!g) g = { t0: Date.now(), max: 0, start: new Map(), moved: false };
+    g.max = Math.max(g.max, e.touches.length);
+    for (const t of e.changedTouches) g.start.set(t.identifier, [t.clientX, t.clientY]);
+  }, { passive: true });
+  scroller.addEventListener('touchmove', e => {
+    if (!g) return;
+    for (const t of e.changedTouches) { const s = g.start.get(t.identifier); if (s && Math.hypot(t.clientX - s[0], t.clientY - s[1]) > 12) g.moved = true; }
+  }, { passive: true });
+  scroller.addEventListener('touchend', e => {
+    if (!g || e.touches.length) return;
+    const quick = Date.now() - g.t0 < 320;
+    if (quick && !g.moved && document.activeElement?.className !== 'tx') {
+      if (g.max === 2) { undo(); toast('Undo'); } else if (g.max === 3) { redo(); toast('Redo'); }
+    }
+    g = null;
+  }, { passive: true });
+  scroller.addEventListener('touchcancel', () => { g = null; }, { passive: true });
+})();
+
+/* ---------- Toolbar ---------- */
+function setTool(t) {
+  state.tool = t;
+  document.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
+  document.body.classList.toggle('t-text', t === 'text');
+  if (t !== 'text' && document.activeElement && document.activeElement.classList.contains('tx')) document.activeElement.blur();
+  renderSwatches(); renderWidths();
+}
+document.querySelectorAll('.tool').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+function renderSwatches() {
+  const box = $('#swatches'); box.innerHTML = '';
+  const kind = state.tool === 'highlighter' ? 'highlighter' : state.tool === 'pen' ? 'pen' : null;
+  box.parentElement.querySelectorAll('.sep')[0].style.display = kind ? '' : 'none';
+  if (!kind) return;
+  const list = INKS[kind].slice();
+  if (!list.includes(state.color[kind])) list.push(state.color[kind]);
+  for (const c of list) {
+    const b = document.createElement('button'); b.className = 'swatch'; b.setAttribute('aria-label', 'Color ' + c);
+    b.setAttribute('aria-pressed', c === state.color[kind] ? 'true' : 'false');
+    b.innerHTML = '<i></i>'; b.firstChild.style.background = c;
+    b.onclick = () => { state.color[kind] = c; savePrefs(); renderSwatches(); };
+    box.appendChild(b);
+  }
+  const cu = document.createElement('label'); cu.className = 'swatch custom'; cu.title = 'Custom color';
+  cu.innerHTML = '<i></i><input type="color" id="customColor" aria-label="Custom color">';
+  cu.querySelector('input').value = state.color[kind];
+  cu.querySelector('input').addEventListener('change', ev => { state.color[kind] = ev.target.value; savePrefs(); renderSwatches(); });
+  box.appendChild(cu);
+}
+function renderWidths() {
+  const box = $('#widths'); box.innerHTML = '';
+  const t = state.tool; const show = t !== 'text';
+  box.parentElement.querySelectorAll('.sep')[1].style.display = show ? '' : 'none';
+  if (!show) return;
+  [5, 9, 14].forEach((px, i) => {
+    const b = document.createElement('button'); b.className = 'wbtn';
+    b.setAttribute('aria-label', ['Fine', 'Medium', 'Bold'][i]); b.setAttribute('aria-pressed', state.widthIdx[t] === i ? 'true' : 'false');
+    b.innerHTML = `<i style="width:${px}px;height:${px}px"></i>`;
+    b.onclick = () => { state.widthIdx[t] = i; renderWidths(); };
+    box.appendChild(b);
+  });
+}
+
+$('#title').addEventListener('input', () => {
+  const n = state.note; n.title = $('#title').value;
+  if (n.example) { makeReal(); }
+  saveNote();
+});
+$('#newBtn').onclick = createNote;
+$('#libBtn').onclick = () => app.classList.add('lib-open');
+$('#scrim').onclick = () => app.classList.remove('lib-open');
+$('#search').addEventListener('input', e => { state.query = e.target.value; renderLibrary(); });
+
+function currentPageIndex() {
+  const sr = scroller.getBoundingClientRect(); const mid = sr.top + sr.height * .4;
+  let best = 0, bd = 1e9;
+  state.pages.forEach((pg, i) => { const r = pg.el.getBoundingClientRect(); const d = mid < r.top ? r.top - mid : mid > r.bottom ? mid - r.bottom : 0; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+function updatePageCount() { $('#pageCount').textContent = `Page ${currentPageIndex() + 1} of ${state.pages.length}`; }
+let scrollRaf = 0;
+scroller.addEventListener('scroll', () => { hoverEl.hidden = true; if (!scrollRaf) scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; updatePageCount(); }); }, { passive: true });
+
+/* ---------- Page actions ---------- */
+function addPage() {
+  if (state.note.example) makeReal();
+  const i = currentPageIndex(); const tpl = state.pages[i].template;
+  const pg = newPage(state.note.id, tpl);
+  state.pages.splice(i + 1, 0, pg); state.note.pageIds.splice(i + 1, 0, pg.id);
+  createPageEl(pg, state.pages[i + 2] ? state.pages[i + 2].el : null);
+  io.observe(pg.el); layout();
+  queueWrite('page', pg.id, () => pageData(pg), 0); saveNote();
+  pg.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function deletePage(i) {
+  const pg = state.pages[i];
+  state.pages.splice(i, 1); state.note.pageIds.splice(i, 1);
+  io.unobserve(pg.el); pg.el.remove();
+  state.undo = state.undo.filter(a => a.pg !== pg); state.redo = state.redo.filter(a => a.pg !== pg); updateUndo();
+  const w = writes.get('page:' + pg.id); if (w) { clearTimeout(w.timer); writes.delete('page:' + pg.id); }
+  refFor('page', pg.id).delete().catch(() => {});
+  layout(); saveNote(); setSync();
+}
+async function deleteNote() {
+  const n = state.note;
+  if (store.unsubPages) { store.unsubPages(); store.unsubPages = null; }
+  for (const key of [...writes.keys()]) if (key === 'note:' + n.id || n.pageIds.some(p => key === 'page:' + p)) { clearTimeout(writes.get(key).timer); writes.delete(key); }
+  state.notes.delete(n.id);
+  openFirst(); renderLibrary();
+  try { for (const pid of n.pageIds) await refFor('page', pid).delete(); await refFor('note', n.id).delete(); toast('Note deleted'); }
+  catch (e) { toast('Could not delete everything. Try again when you are back online.'); }
+  setSync();
+}
+
+/* ---------- Export ---------- */
+function renderForExport(pg, px) {
+  const c = document.createElement('canvas'); c.width = px; c.height = Math.round(px * H / W);
+  const ctx = c.getContext('2d'); const k = px / W; ctx.setTransform(k, 0, 0, k, 0, 0);
+  paint(ctx, pg, true); return c;
+}
+const safeName = s => (s || 'Note').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'Note';
+async function saveFile(name, blob) {
+  if (!STANDALONE) {
+    const d = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (!d) { toast('Saving files is not available in this view.'); return; }
+    try { await d.save({ filename: name, data: blob }); } catch (e) { if (e.code !== 'declined') toast('Could not save the file.'); }
+    return;
+  }
+  const file = new File([blob], name, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); }
+    catch (e) {
+      if (e.name === 'NotAllowedError') readySheet(file);   // the tap expired while the file was being made
+      else if (e.name !== 'AbortError') toast('Could not share the file.');
+    }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+function readySheet(file) {
+  sheet.innerHTML = '';
+  const c = el('<div class="confirm"><p></p><div class="row"><button class="btn ghost">Close</button><button class="btn" style="background:var(--accent);color:var(--accent-ink)">Save or share</button></div></div>');
+  c.querySelector('p').textContent = file.name + ' is ready. Choose “Save to Files” to keep it on your iPad.';
+  c.querySelector('.ghost').onclick = closeSheet;
+  c.querySelectorAll('.btn')[1].onclick = () => { closeSheet(); navigator.share({ files: [file] }).catch(() => {}); };
+  sheet.appendChild(c); sheetWrap.hidden = false;
+}
+async function exportPNG() {
+  await document.fonts.ready;
+  const i = currentPageIndex();
+  const blob = await new Promise(r => renderForExport(state.pages[i], 2000).toBlob(r, 'image/png'));
+  await saveFile(`${safeName(state.note.title)} p${i + 1}.png`, blob);
+}
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function exportPDF() {
+  toast('Preparing PDF…');
+  try { if (!window.jspdf) await loadScript(JSPDF_SRC); }
+  catch (e) { toast('Could not load the PDF maker. Check your connection.'); return; }
+  await document.fonts.ready;
+  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  state.pages.forEach((pg, i) => {
+    if (i) doc.addPage('a4', 'portrait');
+    doc.addImage(renderForExport(pg, 1600).toDataURL('image/jpeg', .9), 'JPEG', 0, 0, 210, 297);
+  });
+  await saveFile(safeName(state.note.title) + '.pdf', doc.output('blob'));
+}
+
+/* ---------- Sheets ---------- */
+const sheetWrap = $('#sheetWrap'), sheet = $('#sheet');
+sheetWrap.addEventListener('click', e => { if (e.target === sheetWrap) closeSheet(); });
+function closeSheet() { sheetWrap.hidden = true; sheet.innerHTML = ''; }
+function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
+function openMore() {
+  const i = currentPageIndex(); const pg = state.pages[i];
+  sheet.innerHTML = '';
+  sheet.appendChild(el(`<h3>Paper · page ${i + 1}</h3>`));
+  const row = el('<div class="row"></div>');
+  TEMPLATES.forEach(([k, label]) => {
+    const b = el(`<button class="chip" aria-pressed="${pg.template === k}">${label}</button>`);
+    b.onclick = () => {
+      pg.template = k; state.note.template = k; prefs.tpl = k; savePrefs();
+      requestRender(pg); savePage(pg); openMore();
+    };
+    row.appendChild(b);
+  });
+  sheet.appendChild(row);
+  sheet.appendChild(el('<h3>Paper color · all pages</h3>'));
+  const pr = el('<div class="row"></div>');
+  PAPERS.forEach(([k, label, hex]) => {
+    const b = el(`<button class="chip" aria-pressed="${paperColor() === hex}"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${hex};box-shadow:0 0 0 1px rgba(0,0,0,.18) inset;vertical-align:-2px;margin-right:6px"></span>${label}</button>`);
+    b.onclick = () => { prefs.paper = k; savePrefs(); applyPaper(); state.pages.forEach(requestRender); openMore(); };
+    pr.appendChild(b);
+  });
+  sheet.appendChild(pr);
+  sheet.appendChild(el('<h3>Zoom</h3>'));
+  const zr = el('<div class="row"></div>');
+  [[1, 'Fit'], [1.25, '125%'], [1.5, '150%'], [2, '200%']].forEach(([z, label]) => {
+    const b = el(`<button class="chip" aria-pressed="${state.zoom === z}">${label}</button>`);
+    b.onclick = () => { const r = scroller.scrollTop / Math.max(1, scroller.scrollHeight); state.zoom = z; layout(); scroller.scrollTop = r * scroller.scrollHeight; openMore(); };
+    zr.appendChild(b);
+  });
+  sheet.appendChild(zr);
+  sheet.appendChild(el('<h3>Page</h3>'));
+  const fb = el(`<button class="mi">Draw with finger<span class="toggle ${state.fingerDraw ? 'on' : ''}"></span></button>`);
+  fb.onclick = () => { state.fingerDraw = !state.fingerDraw; document.body.classList.toggle('finger', state.fingerDraw); savePrefs(); openMore(); };
+  sheet.appendChild(fb);
+  const ap = el('<button class="mi">Add page after this one</button>'); ap.onclick = () => { closeSheet(); addPage(); }; sheet.appendChild(ap);
+  const cp = el('<button class="mi">Clear this page</button>');
+  cp.onclick = () => {
+    pushUndo({ k: 'clear', pg, prev: pg.strokes.slice(), prevTexts: pg.texts.slice() });
+    pg.strokes = []; pg.texts = []; renderTexts(pg); requestRender(pg); savePage(pg); closeSheet(); toast('Page cleared. Undo brings it back.');
+  };
+  sheet.appendChild(cp);
+  if (state.pages.length > 1) {
+    const dp = el('<button class="mi danger">Delete this page…</button>');
+    dp.onclick = () => confirmSheet(`Delete page ${i + 1}? Everything on it is removed and this can’t be undone.`, 'Delete page', () => deletePage(i));
+    sheet.appendChild(dp);
+  }
+  sheet.appendChild(el('<h3>Export</h3>'));
+  const pdf = el(`<button class="mi">PDF of the whole note<small>${state.pages.length} page${state.pages.length > 1 ? 's' : ''}</small></button>`); pdf.onclick = () => { closeSheet(); exportPDF(); }; sheet.appendChild(pdf);
+  const png = el('<button class="mi">Image of this page<small>PNG</small></button>'); png.onclick = () => { closeSheet(); exportPNG(); }; sheet.appendChild(png);
+  sheet.appendChild(el('<h3>Note</h3>'));
+  const help = el('<button class="mi">Apple Pencil Pro tips</button>'); help.onclick = openHelp; sheet.appendChild(help);
+  if (!state.note.example) {
+    const dn = el('<button class="mi danger">Delete note…</button>');
+    dn.onclick = () => confirmSheet(`Delete “${state.note.title || 'Untitled'}” and all ${state.pages.length} page${state.pages.length > 1 ? 's' : ''}? This can’t be undone.`, 'Delete note', deleteNote);
+    sheet.appendChild(dn);
+  }
+  sheetWrap.hidden = false;
+}
+function confirmSheet(text, action, fn) {
+  sheet.innerHTML = '';
+  const c = el('<div class="confirm"><p></p><div class="row"><button class="btn ghost">Cancel</button><button class="btn red"></button></div></div>');
+  c.querySelector('p').textContent = text; c.querySelector('.red').textContent = action;
+  c.querySelector('.ghost').onclick = closeSheet;
+  c.querySelector('.red').onclick = () => { closeSheet(); fn(); };
+  sheet.appendChild(c); sheetWrap.hidden = false;
+}
+function openHelp() {
+  sheet.innerHTML = `<h3>iPad mini (A17 Pro) + Apple Pencil Pro</h3><dl class="help">
+  <dt>Pressure and tilt-free ink</dt><dd>Press harder for a heavier pen line. The highlighter stays flat and sits under your ink.</dd>
+  <dt>Hover</dt><dd>Hold the tip just above the screen to see a preview ring of the pen size and color.</dd>
+  <dt>Palm and fingers</dt><dd>Only the Pencil draws. One finger scrolls, two-finger tap undoes, three-finger tap redoes. Turn on “Draw with finger” in ••• if you need it.</dd>
+  <dt>Squeeze, barrel roll and double-tap</dt><dd>Apple only passes these to native apps, so a web notebook can’t react to them. Switch tools from the toolbar instead.</dd>
+  <dt>Scribble</dt><dd>With the T tool, tap to add a text box and handwrite inside it. iPadOS converts it to type.</dd>
+  <dt>Paper color</dt><dd>Ivory, Cream and Butter cut glare compared with white. Change it under Paper color in this menu.</dd>
+  <dt>Full screen</dt><dd>In Safari, tap Share → Add to Home Screen to open Margin like an app.</dd>
+  <dt>Keyboard</dt><dd>P pen · H highlighter · E eraser · T text · ⌘Z undo · ⇧⌘Z redo.</dd></dl>
+  <div class="confirm"><div class="row"><button class="btn ghost" id="helpDone">Done</button></div></div>`;
+  $('#helpDone').onclick = closeSheet; sheetWrap.hidden = false;
+}
+$('#moreBtn').onclick = openMore;
+
+/* ---------- Keyboard ---------- */
+document.addEventListener('keydown', e => {
+  const editing = e.target.closest && (e.target.closest('input') || e.target.isContentEditable);
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !editing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (e.key === 'Escape') { closeSheet(); app.classList.remove('lib-open'); if (editing) e.target.blur(); return; }
+  if (editing || e.metaKey || e.ctrlKey || e.altKey) return;
+  const map = { p: 'pen', h: 'highlighter', e: 'eraser', t: 'text' };
+  if (map[e.key.toLowerCase()]) setTool(map[e.key.toLowerCase()]);
+});
+
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600); }
+
+/* ---------- Start ---------- */
+document.body.classList.toggle('finger', state.fingerDraw);
+applyPaper();
+setTool('pen');
+openExample();
+renderLibrary();
+initStore().then(() => {
+  if (!state.note.touched && state.note.example && state.notes.size) openFirst();
+  renderLibrary();
+});
+document.fonts && document.fonts.ready.then(() => state.pages.forEach(requestRender));
+})();
+</script>
+
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+</body>
+</html>
